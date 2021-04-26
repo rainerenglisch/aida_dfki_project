@@ -3,6 +3,16 @@ aida_dfki_project
 
 Final AIDA Project
 
+Naming of Notebooks:
+* Prefix 01: Analysis
+* Prefix 02: Preprocessing
+* Prefix 03: Train-/Test Preparation
+* Prefix 04: Models
+* Prefix 05: Preparation of results
+
+![notebook_naming_example](/notebook_naming_example.jpg)
+
+
 Project Organization
 ------------
 
