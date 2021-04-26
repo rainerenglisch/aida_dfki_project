@@ -10,6 +10,7 @@ Naming of Notebooks:
 * Prefix 04: Models
 * Prefix 05: Preparation of results
 
+Example:
 ![notebook_naming_example](/notebook_naming_example.jpg)
 
 
