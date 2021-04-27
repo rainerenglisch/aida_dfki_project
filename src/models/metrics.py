@@ -36,6 +36,7 @@ class BLEU(Score):
     def calculate(self, id_to_prediction, id_to_references):
         name_to_score = super(BLEU, self).calculate(id_to_prediction,
                                                     id_to_references)
+        print(name_to_score.values)
         scores = name_to_score.values()[0]
         result = {}
         for i, score in enumerate(scores, start=1):
