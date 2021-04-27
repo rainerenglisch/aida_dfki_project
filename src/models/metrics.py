@@ -1,104 +1,92 @@
-import os
-import tensorflow as tf
+import nltk.translate.bleu_score as ntbs
+import rouge_score.rouge_scorer as rouge_scorer
 
-from pycocoevalcap.bleu import bleu
-from pycocoevalcap.cider import cider
-from pycocoevalcap.meteor import meteor
-from pycocoevalcap.rouge import rouge
+def evaluate(c_true: dict, c_pred: dict, verbose:int = 0) -> tuple:
+    """
+    Calculate the performance of the model
+    Metrics are: ROUGE-L and BLEU-1
+    Arguments:
+        c_true:  Dictionary containing all given captions per picture
+                 key of the dictionary is the picture name
+        c_pred:  Dictionary with one predicted caption per picture
+                 key of the dictionary is the picture name
+        verbose: Show insides regarding the verbose level
+                 Levels:
+                     0: show no insides
+                     1: show ROUGE_L-Recall and BLEU-1-Precision lists
+                     2: show internal data structures during run
+                     3: show data inside loops
+    Returns:
+        ROUGE-L recall and BLEU-1 precision as float values within a tuple:
+        Index:
+            0: ROUGE-L recall
+            1: BLEU-1 precision
+    """
+    # Init
+    ROUGE_L_INDI = "rougeL"
+    RECALL_INDEX = 1  # ROUGE-L score index
+    WEIGTHS_1_GRAM = (1, 0, 0, 0)  # BLEU-1 config
+    rouge_l_rec = []
+    bleu_1_prec = []
+    scorer = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=False)
+    crlf2 = lambda x: '\n' if x > 2 else ''
 
+    # Calc scores
+    for k in c_true.keys():
+        references = c_true[k]
+        if len(references) > 0:
+            candidate = c_pred[k]  # one per picture
 
-class Score(object):
-    """A subclass of this class is an adapter of pycocoevalcap."""
+            # Calc ROUGE-L recall and BLEU-1 references
+            rrec = []  # ROUGE-L recalls temp
+            bref = []  # BLEU-1 references temp
+            for reference in references:
+                # Calc ROUGE-L recall
+                score = scorer.score(reference, candidate)[ROUGE_L_INDI][RECALL_INDEX]
+                rrec.append(score)
+                if verbose >= 3:
+                    print(f"Rouge-L-Recall: pred. caption '{candidate}'\ttrue caption '{reference:<30}':\t{score}")
 
-    def __init__(self, score_name, implementation):
-        self._score_name = score_name
-        self._implementation = implementation
+                # BLEU-1 reference transformation
+                bref.append(reference.split(" "))
 
-    def calculate(self, id_to_prediction, id_to_references):
-        id_to_preds = {}
-        for id_, pred in id_to_prediction.items():
-            id_to_preds[id_] = [pred]
-        avg_score, scores = self._implementation.compute_score(
-                                                id_to_references, id_to_preds)
-        if isinstance(avg_score, (list, tuple)):
-            avg_score = map(float, avg_score)
+            # ROUGE-L max value selection
+            r_score = max(rrec)
+            rouge_l_rec.append(r_score)
+            if verbose >= 2:
+                print(f"Rouge-L-Recalls pred. caption '{candidate}': {rrec} -> {r_score}{crlf2(verbose)}")
+
+            # Calc BlEU-1 precision
+            b_score = ntbs.sentence_bleu(bref, candidate.split(" "), weights=WEIGTHS_1_GRAM)
+            bleu_1_prec.append(b_score)
+            if verbose >= 3:
+                print(f"List of BLEU-1 true captions: {bref}")
+            if verbose >= 2:
+                print(f"BLEU-1-Precision pred. caption: '{candidate}': {b_score}\n")
+
         else:
-            avg_score = float(avg_score)
-        return {self._score_name: avg_score}
+            print("Reference caption for image {k} wrong")
+
+    # Prepare results
+    rouge_l_rec_score = sum(rouge_l_rec)/len(rouge_l_rec)
+    bleu_1_prec_score = sum(bleu_1_prec)/len(bleu_1_prec)
+
+    if verbose == 1:
+        print(f"ROUGE-L-Recalls:\n{rouge_l_rec} -> {rouge_l_rec_score}")
+        print(f"\nBLEU-1-Precisions:\n{bleu_1_prec} -> {bleu_1_prec_score}")
+
+    return rouge_l_rec_score, bleu_1_prec_score
 
 
-class BLEU(Score):
-    def __init__(self, n=4):
-        implementation = bleu.Bleu(n)
-        super(BLEU, self).__init__('bleu', implementation)
-        self._n = n
-
-    def calculate(self, id_to_prediction, id_to_references):
-        name_to_score = super(BLEU, self).calculate(id_to_prediction,
-                                                    id_to_references)
-        print(name_to_score.values)
-        scores = name_to_score.values()[0]
-        result = {}
-        for i, score in enumerate(scores, start=1):
-            name = '{}_{}'.format(self._score_name, i)
-            result[name] = score
-        return result
-
-
-class CIDEr(Score):
-    def __init__(self):
-        implementation = cider.Cider()
-        super(CIDEr, self).__init__('cider', implementation)
-
-
-class METEOR(Score):
-    def __init__(self):
-        implementation = meteor.Meteor()
-        super(METEOR, self).__init__('meteor', implementation)
-
-    def calculate(self, id_to_prediction, id_to_references):
-        if self._data_downloaded():
-            return super(METEOR, self).calculate(id_to_prediction,
-                                                 id_to_references)
-        else:
-            return {self._score_name: 0.0}
-
-    def _data_downloaded(self):
-        meteor_dir = os.path.dirname(meteor.__file__)
-        return (os.path.isfile(os.path.join(meteor_dir, 'meteor-1.5.jar')) and
-                os.path.isfile(
-                        os.path.join(meteor_dir, 'data', 'paraphrase-en.gz')))
-
-
-class ROUGE(Score):
-    def __init__(self):
-        implementation = rouge.Rouge()
-        super(ROUGE, self).__init__('rouge', implementation)
-
-
-def categorical_accuracy_with_variable_timestep(y_true, y_pred):
-    # Actually discarding is not needed if the dummy is an all-zeros array
-    # (It is indeed encoded in an all-zeros array by
-    # CaptionPreprocessing.preprocess_batch)
-    y_true = y_true[:, :-1, :]  # Discard the last timestep/word (dummy)
-    y_pred = y_pred[:, :-1, :]  # Discard the last timestep/word (dummy)
-
-    # Flatten the timestep dimension
-    shape = tf.shape(y_true)
-    y_true = tf.reshape(y_true, [-1, shape[-1]])
-    y_pred = tf.reshape(y_pred, [-1, shape[-1]])
-
-    # Discard rows that are all zeros as they represent dummy or padding words.
-    is_zero_y_true = tf.equal(y_true, 0)
-    is_zero_row_y_true = tf.reduce_all(is_zero_y_true, axis=-1)
-    y_true = tf.boolean_mask(y_true, ~is_zero_row_y_true)
-    y_pred = tf.boolean_mask(y_pred, ~is_zero_row_y_true)
-
-    accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(y_true, axis=1),
-                                               tf.argmax(y_pred, axis=1)),
-                                      dtype=tf.float32))
-    return accuracy
-
-
-# As Keras stores a function's name as its metric's name
-categorical_accuracy_with_variable_timestep.__name__ = 'categorical_accuracy_wvt'
+# Test it
+references = dict({
+    "picture1.jpg": ["police killed the gunman", "police kills the gunman", "police has killed the gunman"], 
+    "picture2.jpg": ["girl is playing with a doll", "little girl holds a doll", "blond girl is playing"],
+    "picture3.jpg": ["car is standing on a lot", "car before a building ", "car is parking near a house"]
+})
+candidates = dict({
+    "picture1.jpg": "police kill the gunman",
+    "picture2.jpg": "girl is playing",
+    "picture3.jpg": "near a building car is waiting"
+})
+assert evaluate(references, candidates, verbose=0) == (0.6666666666666666, 0.7666215479690409)
