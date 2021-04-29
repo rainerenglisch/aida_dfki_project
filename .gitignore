@@ -97,3 +97,5 @@ models/InceptV3_GRU_NoAttention_CustEmbedding/*.h5
 models/InceptV3_GRU_NoAttention_CustEmbedding/checkpoint*
 models/InceptV3_GRU_NoAttention_CustEmbedding_768-units-all/*.h5
 models/InceptV3_GRU_NoAttention_CustEmbedding_768-units-all/checkpoint*
+models/Inception-ResNet-V2_GRU_NoAttention_CustEmbedding/*.h5
+models/Inception-ResNet-V2_GRU_NoAttention_CustEmbedding/checkpoint*
