@@ -88,10 +88,5 @@ target/
 # Mypy cache
 .mypy_cache/
 notebooks/model.png
-notebooks/tensorboard_logs/scalars/GRU_Translator_256_20210427-162007/metrics/events.out.tfevents.1619533207.saturn.145467.486.v2
-notebooks/tensorboard_logs/scalars/GRU_Translator_256_20210427-163610/metrics/events.out.tfevents.1619534170.saturn.6219.486.v2
-notebooks/tensorboard_logs/scalars/GRU_Translator_256_20210427-205245/metrics/events.out.tfevents.1619549565.saturn.36142.486.v2
-notebooks/tensorboard_logs/scalars/GRU_Translator_256_20210427-210152/metrics/events.out.tfevents.1619550112.saturn.37110.486.v2
-notebooks/tensorboard_logs/scalars/GRU_Translator_256_20210427-211717/metrics/events.out.tfevents.1619551037.saturn.39237.486.v2
-notebooks/tensorboard_logs/scalars/GRU_Translator_256_20210427-212156/metrics/events.out.tfevents.1619551316.saturn.39628.486.v2
-notebooks/Untitled.ipynb
+models/Baseline_Train_Test/*.h5
+models/Baseline_Train_Test/checkpoint*
