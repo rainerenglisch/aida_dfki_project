@@ -95,3 +95,5 @@ models/Baseline_Train_Test/*.h5
 models/Baseline_Train_Test/checkpoint*
 models/InceptV3_GRU_NoAttention_CustEmbedding/*.h5
 models/InceptV3_GRU_NoAttention_CustEmbedding/checkpoint*
+models/InceptV3_GRU_NoAttention_CustEmbedding_768-units-all/*.h5
+models/InceptV3_GRU_NoAttention_CustEmbedding_768-units-all/checkpoint*
