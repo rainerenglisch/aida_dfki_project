@@ -103,3 +103,7 @@ models/Inception-ResNet-V2_GRU_NoAttention_CustEmbedding_Tokenizer/*.h5
 models/Inception-ResNet-V2_GRU_NoAttention_CustEmbedding_Tokenizer/checkpoint*
 models/Inception-ResNet-V2_GRU_NoAttention_CustEmbedding_V2/*.h5
 models/Inception-ResNet-V2_GRU_NoAttention_CustEmbedding_V2/checkpoint*
+models/InceptV3_GRU_NoAttention_CustEmbedding_v2/*.h5
+models/InceptV3_GRU_NoAttention_CustEmbedding_v2/checkpoint*
+models/InceptV3_LSTM_NoAttention_CustEmbedding_v2/*.h5
+models/InceptV3_LSTM_NoAttention_CustEmbedding_v2/checkpoint*
